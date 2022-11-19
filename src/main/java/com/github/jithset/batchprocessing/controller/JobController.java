@@ -21,20 +21,8 @@ public class JobController {
     @Autowired
     private Job job;
 
-    @PostMapping("/importCustomers")
+    @PostMapping("/run")
     public void importCsvToDBJob() {
-        JobParameters jobParameters = new JobParametersBuilder()
-                .addLong("startAt", System.currentTimeMillis()).toJobParameters();
-        try {
-            jobLauncher.run(job, jobParameters);
-        } catch (JobExecutionAlreadyRunningException | JobRestartException | JobInstanceAlreadyCompleteException |
-                 JobParametersInvalidException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @PostMapping("/importstudent")
-    public void importCustomerToStudent() {
         JobParameters jobParameters = new JobParametersBuilder()
                 .addLong("startAt", System.currentTimeMillis()).toJobParameters();
         try {

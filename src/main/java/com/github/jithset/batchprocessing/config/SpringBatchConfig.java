@@ -46,18 +46,20 @@ public class SpringBatchConfig {
     private StudentRepository studentRepository;
 
 
-//    @Bean
-//    public FlatFileItemReader<Customer> reader() {
-//        FlatFileItemReader<Customer> itemReader = new FlatFileItemReader<>();
-//        itemReader.setResource(new FileSystemResource("src/main/resources/customer.csv"));
-//        itemReader.setName("csvReader");
-//        itemReader.setLinesToSkip(1);
-//        itemReader.setLineMapper(lineMapper());
-//        return itemReader;
-//    }
+    @Bean
+    public FlatFileItemReader<Customer> csvReader() {
+        FlatFileItemReader<Customer> itemReader = new FlatFileItemReader<>();
+        itemReader.setResource(new FileSystemResource("src/main/resources/customer.csv"));
+        itemReader.setName("csvReader");
+        itemReader.setLinesToSkip(1);
+        itemReader.setLineMapper(lineMapper());
+        return itemReader;
+    }
+
+
 
     @Bean
-    public ItemReader<Customer> reader() {
+    public ItemReader<Customer> dbReader() {
         JdbcPagingItemReaderBuilder jdbcPagingItemReaderBuilder = new JdbcPagingItemReaderBuilder();
         jdbcPagingItemReaderBuilder.name("reader");
         jdbcPagingItemReaderBuilder.dataSource(dataSource);
@@ -90,36 +92,39 @@ public class SpringBatchConfig {
         return new CustomerProcessor();
     }
 
-//    @Bean
-//    public RepositoryItemWriter<Customer> writer() {
-//        RepositoryItemWriter<Customer> writer = new RepositoryItemWriter<>();
-//        writer.setRepository(customerRepository);
-//        writer.setMethodName("save");
-//        return writer;
-//    }
+    @Bean
+    //
+    public RepositoryItemWriter<Customer> customerWriter() {
+        RepositoryItemWriter<Customer> writer = new RepositoryItemWriter<>();
+        writer.setRepository(customerRepository);
+        writer.setMethodName("save");
+        return writer;
+    }
 
     @Bean
-    public RepositoryItemWriter<Student> writer() {
+    public RepositoryItemWriter<Student> studentWriter() {
         RepositoryItemWriter<Student> writer = new RepositoryItemWriter<>();
         writer.setRepository(studentRepository);
         writer.setMethodName("save");
         return writer;
     }
 
-//    @Bean
-//    public Step step1() {
-//        return stepBuilderFactory.get("csv-step").<Customer, Customer>chunk(10)
-//                .reader(reader())
-//                .processor(processor())
-//                .writer(writer())
-//                .taskExecutor(taskExecutor())
-//                .build();
-//    }
+    // csv to customer
     @Bean
     public Step step1() {
+        return stepBuilderFactory.get("csv-step").<Customer, Customer>chunk(10)
+                .reader(csvReader())
+                .writer(customerWriter())
+                .taskExecutor(taskExecutor())
+                .build();
+    }
+
+    // customer to student
+    @Bean
+    public Step step2() {
         return stepBuilderFactory.get("csv-step").<Customer, Student>chunk(10)
-                .reader(reader())
-                .writer(writer())
+                .reader(dbReader())
+                .writer(studentWriter())
                 .taskExecutor(taskExecutor())
                 .build();
     }
@@ -127,7 +132,7 @@ public class SpringBatchConfig {
     @Bean
     public Job runJob() {
         return jobBuilderFactory.get("importCustomers")
-                .flow(step1()).end().build();
+                .flow(step2()).end().build();  // change step here
 
     }
 
